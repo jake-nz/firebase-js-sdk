@@ -15,24 +15,29 @@
  * limitations under the License.
  */
 
+// tslint:disable:no-floating-promises
+
 import { expect } from 'chai';
+// app/database is used as namespaces to access types
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { initializeApp, database, app } from 'firebase';
 import { fromRef } from '../database/fromRef';
-import { list, ListenEvent, objectVal, listVal } from '../database';
+import { list, ListenEvent, objectVal, listVal, QueryChange } from '../database';
 import { take, skip, switchMap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { auditTrail } from '../database/list/audit-trail';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 export const TEST_PROJECT = require('../../../config/project.json');
 
-const rando = () =>
+const rando = (): string =>
   Math.random()
     .toString(36)
     .substring(5);
 
-let batch = (items: any[]) => {
-  let batch = {};
-  Object.keys(items).forEach(function(key) {
+const batch = (items: any[]): Readonly<{}> => {
+  const batch = {};
+  Object.keys(items).forEach((key) => {
     const itemValue = items[key];
     batch[itemValue.key] = itemValue;
   });
@@ -43,14 +48,17 @@ let batch = (items: any[]) => {
 describe('RxFire Database', () => {
   let app: app.App;
   let database: database.Database;
-  let ref = (path: string) => {
+  const ref = (path: string): database.Reference => {
     app!.database().goOffline();
     return app!.database().ref(path);
   };
 
   function prepareList(
     opts: { events?: ListenEvent[]; skipnumber: number } = { skipnumber: 0 }
-  ) {
+  ): {
+    snapChanges: Observable<QueryChange[]>;
+    ref: database.Reference;
+  } {
     const { events, skipnumber } = opts;
     const aref = ref(rando());
     const snapChanges = list(aref, events);
@@ -216,7 +224,7 @@ describe('RxFire Database', () => {
           sub.unsubscribe();
           done();
         });
-        itemRef.child(key).setPriority(-100, () => {});
+        itemRef.child(key).setPriority(-100, () => { });
       });
 
       /**
@@ -386,7 +394,7 @@ describe('RxFire Database', () => {
       it('should process a new child_removed event', done => {
         const aref = ref(rando());
         const obs = list(aref, [ListenEvent.added, ListenEvent.removed]);
-        const sub = obs
+        const _sub = obs
           .pipe(
             skip(1),
             take(1)
@@ -409,7 +417,7 @@ describe('RxFire Database', () => {
       it('should process a new child_changed event', done => {
         const aref = ref(rando());
         const obs = list(aref, [ListenEvent.added, ListenEvent.changed]);
-        const sub = obs
+        const _sub = obs
           .pipe(
             skip(1),
             take(1)
@@ -432,7 +440,7 @@ describe('RxFire Database', () => {
       it('should process a new child_moved event', done => {
         const aref = ref(rando());
         const obs = list(aref, [ListenEvent.added, ListenEvent.moved]);
-        const sub = obs
+        const _sub = obs
           .pipe(
             skip(1),
             take(1)
@@ -446,7 +454,7 @@ describe('RxFire Database', () => {
           .add(done);
         app.database().goOnline();
         aref.set(itemsObj).then(() => {
-          aref.child(items[0].key).setPriority('a', () => {});
+          aref.child(items[0].key).setPriority('a', () => { });
         });
       });
 
@@ -473,7 +481,7 @@ describe('RxFire Database', () => {
        */
       it('should handle multiple subscriptions (hot)', done => {
         const { snapChanges, ref } = prepareList();
-        const sub = snapChanges.subscribe(() => {}).add(done);
+        const sub = snapChanges.subscribe(() => { }).add(done);
         snapChanges
           .pipe(take(1))
           .subscribe(actions => {
@@ -491,7 +499,7 @@ describe('RxFire Database', () => {
         const { snapChanges, ref } = prepareList();
         snapChanges
           .pipe(take(1))
-          .subscribe(() => {})
+          .subscribe(() => { })
           .add(() => {
             snapChanges
               .pipe(take(1))
@@ -568,7 +576,7 @@ describe('RxFire Database', () => {
        */
       it('should handle dynamic queries that return empty sets', done => {
         let count = 0;
-        let namefilter$ = new BehaviorSubject<number | null>(null);
+        const namefilter$ = new BehaviorSubject<number | null>(null);
         const aref = ref(rando());
         aref.set(itemsObj);
         namefilter$
@@ -607,7 +615,10 @@ describe('RxFire Database', () => {
 
     function prepareAuditTrail(
       opts: { events?: ListenEvent[]; skipnumber: number } = { skipnumber: 0 }
-    ) {
+    ): {
+      changes: Observable<QueryChange[]>;
+      ref: database.Reference;
+    } {
       const { events, skipnumber } = opts;
       const aref = ref(rando());
       aref.set(itemsObj);
