@@ -1157,7 +1157,9 @@ export class JsonProtoSerializer {
   }
 
   private toFilter(filters: Filter[]): api.Filter | undefined {
-    if (filters.length === 0) {return;}
+    if (filters.length === 0) {
+      return;
+    }
     const protos = filters.map(filter => {
       if (filter instanceof FieldFilter) {
         return this.toUnaryOrFieldFilter(filter);
@@ -1323,12 +1325,20 @@ export class JsonProtoSerializer {
         const nanField = this.fromFieldPathReference(
           filter.unaryFilter!.field!
         );
-        return new FieldFilter(nanField, Operator.EQUAL, fieldValue.DoubleValue.NAN);
+        return new FieldFilter(
+          nanField,
+          Operator.EQUAL,
+          fieldValue.DoubleValue.NAN
+        );
       case 'IS_NULL':
         const nullField = this.fromFieldPathReference(
           filter.unaryFilter!.field!
         );
-        return new FieldFilter(nullField, Operator.EQUAL, fieldValue.NullValue.INSTANCE);
+        return new FieldFilter(
+          nullField,
+          Operator.EQUAL,
+          fieldValue.NullValue.INSTANCE
+        );
       case 'OPERATOR_UNSPECIFIED':
         return fail('Unspecified filter');
       default:
