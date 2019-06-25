@@ -189,7 +189,7 @@ export class Service implements FirebaseFunctions, FirebaseService {
     data: unknown,
     options: HttpsCallableOptions
   ): Promise<HttpsCallableResult> {
-    const url = this._url(name);
+    const url = options.url || this._url(name);
 
     // Encode any special types, such as dates, in the input data.
     data = this.serializer.encode(data);

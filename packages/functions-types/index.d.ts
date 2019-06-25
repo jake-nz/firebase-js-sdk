@@ -35,6 +35,7 @@ export interface HttpsCallable {
  */
 export interface HttpsCallableOptions {
   timeout?: number; // in millis
+  url?: string;
 }
 
 /**
